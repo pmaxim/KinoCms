@@ -1,0 +1,71 @@
+﻿@page "/admin"
+@using BlazorInputFile
+@using Microsoft.AspNetCore.Authorization
+@using System.IO
+@using System.Net
+@using KinoCMS.Shared.Models
+@inject HttpClient Http
+@attribute [Authorize]
+
+<form action="javascript:void(0);" class="p-2" style="background-color: whitesmoke">
+    <div class="row">
+        <div class="col-12">
+            @if (!string.IsNullOrEmpty(_model.Src))
+            {
+                <img class="card-img" src="@_model.Src" alt="Card image" style="width: @ImageWidth">
+            }
+        </div>
+
+
+        <div class="col-12">
+            <div class="form-group">
+                <label for="film-name">Film name</label>
+                <input type="text" class="form-control"
+                       @bind="_model.Name"
+                       id="film-name" placeholder="">
+            </div>
+
+        </div>
+        <div class="col-12">
+            <InputFile OnChange="HandleFileSelected" id="user-image"
+                       class="d-none" accept="image/gif, image/jpg, image/jpeg, image/png" />
+            <label class="mb-0 c-p" for="user-image">
+                <span class="oi oi-link-intact"></span> Load Images
+            </label>
+        </div>
+        <div class="col-12">
+            <button @onclick="Update" class="btn btn-success">Update</button>
+        </div>
+    </div>
+</form>
+
+
+@code {
+    private FilmUpdateModel _model = new FilmUpdateModel();
+    private static readonly string ImageWidth = $"{Constants.ImageSize}px;";
+
+    private async Task Update()
+    {
+        if (string.IsNullOrEmpty(_model.Src) || string.IsNullOrEmpty(_model.Name)) return;
+        await Http.PostAsJsonAsync($"Admin/Update", _model);
+        _model = new FilmUpdateModel();
+    }
+
+    async Task HandleFileSelected(IFileListEntry[] files)
+    {
+        var file = files.FirstOrDefault();
+        if (file != null)
+        {
+            var ms = new MemoryStream();
+            await file.Data.CopyToAsync(ms);
+
+            var content = new MultipartFormDataContent {
+                { new ByteArrayContent(ms.GetBuffer()), "\"upload\"", file.Name }
+            };
+            var response = await Http.PostAsync("Admin/UploadImageStream", content);
+            var t = await response.Content.ReadFromJsonAsync<List<string>>();
+            if (t.Count == 0) return;
+            _model.Src = t[0];
+        }
+    }
+}
