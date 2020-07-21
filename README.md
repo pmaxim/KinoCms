@@ -6,6 +6,6 @@ JWT Token - IdentityServer4
 После регистрации пользователь в меню видит "Home" со списком фильмов и  
 "Admin", где может загрузить картинку и название фильма  
 Если нет желания регистрироваться - воспользуйтесь  
-Log: test@test.net
+Log: test@test.net   
 Password: Password1#
 
